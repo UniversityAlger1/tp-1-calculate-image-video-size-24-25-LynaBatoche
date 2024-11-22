@@ -1,63 +1,39 @@
-
-#include "config/coloredBitmap.h"
-#include <stdio.h>
 #include <string.h>
+#include <stdio.h>
+#include "config/video.h"
 
-// Helper function to calculate the size of a single colored or grayscale bitmap
-float coloredBitmap(int w, int h, char* unit) {
-    float sizeInBits = (float)(w * h * 24); // Color image: 24 bits per pixel
+// Parameters:
+//   w: width of the image
+//   h: height of the imag
+//   durationMovie: duration in seconds of the movie (colored image)
+//   durationCredits: duration in seconds of credits (black/white image)
+//   unit: Unit of the output value. It could be 'bt' for bytes, 'ko' for kilobits, 'mo' for megabits, 'go' for gigabits
+// Return value
+//   colored video size (based on the unit passed parameter)
+float video(int w, int h, int durationMovie, int durationCredits, int fps, char* unit) {
+    // Bits per pixel for colored image (24 bits)
+    float bitsPerPixel = 24;
 
-    if (strcmp(unit, "bt") == 0) {
-        return sizeInBits;
-    } else if (strcmp(unit, "ko") == 0) {
-        return sizeInBits / 1024.0f;
-    } else if (strcmp(unit, "mo") == 0) {
-        return sizeInBits / (1024.0f * 1024.0f);
-    } else if (strcmp(unit, "go") == 0) {
-        return sizeInBits / (1024.0f * 1024.0f * 1024.0f);
-    }
+    float clrImage = w * h * bitsPerPixel * durationMovie * fps;
+    float BImage = w * h * durationCredits * fps;
+    float sizeInBits = clrImage + BImage; // Add to total size in bits
+    float size;
 
-    return 0; // Invalid unit
-}
 
-// Main function to calculate the size of the video
-float videoSize(int w, int h, int durationMovie, int durationCredits, int fps, char* unit) {
-    // Calculate the number of frames for color and black-and-white sections
-    int framesColor = fps * durationMovie;
-    int framesBW = fps * durationCredits;
 
-    // Calculate the size of a single frame for each section
-    float sizeColorFrameBits = (float)(w * h * 24); // 24 bits per pixel
-    float sizeBWFrameBits = (float)(w * h * 8);    // 8 bits per pixel
+    // Convert size based on the requested unit
+    if (strcmp(unit, "bt") == 0) {
+        size = sizeInBits; // Convert to bytes
+    } else if (strcmp(unit, "ko") == 0) {
+        size = sizeInBits / (1024); // Convert to kilobits
+    } else if (strcmp(unit, "mo") == 0) {
+        size = sizeInBits / (1024 * 1024); // Convert to megabits
+    } else if (strcmp(unit, "go") == 0) {
+        size = sizeInBits / (1024 * 1024 * 1024); // Convert to gigabits
+    } else {
+        // If the unit is not recognized, return -1 or some error value
+        return -1.0f;
+    }
 
-    // Total size in bits
-    float totalSizeBits = (framesColor * sizeColorFrameBits) + (framesBW * sizeBWFrameBits);
-
-    // Convert to the desired unit
-    if (strcmp(unit, "bt") == 0) {
-        return totalSizeBits;
-    } else if (strcmp(unit, "ko") == 0) {
-        return totalSizeBits / 1024.0f;
-    } else if (strcmp(unit, "mo") == 0) {
-        return totalSizeBits / (1024.0f * 1024.0f);
-    } else if (strcmp(unit, "go") == 0) {
-        return totalSizeBits / (1024.0f * 1024.0f * 1024.0f);
-    }
-
-    return 0; // Invalid unit
-}
-
-// Example usage
-int main() {
-    int width = 1920;
-    int height = 1080;
-    int durationMovie = 300; // 5 minutes
-    int durationCredits = 60; // 1 minute
-    int fps = 30;
-    char unit[] = "mo";
-
-    float result = videoSize(width, height, durationMovie, durationCredits, fps, unit);
-    printf("The size of the video is: %.2f %s\n", result, unit);
-
-    return 0;
+    return size / 8;
 }
